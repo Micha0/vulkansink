@@ -28,6 +28,7 @@ public class VulkanActivity extends Activity implements SurfaceHolder.Callback
     public static native void nativeSetSurface(Surface surface);
     public static native void nativeSetAssetManager(AssetManager assetManagerInstance);
     public static native void nativeOnConfigurationChanged();
+    public static native void nativeOnWindowFocusChanged(boolean hasFocus);
 //    public static native void nativeDoFrame(long frameTimeNanos);
 
     @SuppressLint("ClickableViewAccessibility")
@@ -133,6 +134,14 @@ public class VulkanActivity extends Activity implements SurfaceHolder.Callback
         super.onConfigurationChanged(config);
 
         nativeOnConfigurationChanged();
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus)
+    {
+        super.onWindowFocusChanged(hasFocus);
+
+        nativeOnWindowFocusChanged(hasFocus);
     }
 
     //SurfaceHolder.Callback

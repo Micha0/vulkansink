@@ -17,12 +17,16 @@ namespace {
     typedef std::unordered_multimap<int32_t, App::InputEventCallbackType > g_InputEventHandlersType;
     g_CommandEventHandlersType g_CommandEventHandlers;
     g_InputEventHandlersType g_InputEventHandlers;
+
     bool g_HasFocus = false;
+    bool g_IsResumed = false;
+    bool g_SurfaceReady = false;
+    ANativeWindow* g_Window = nullptr;
 }
 
 struct app_state {
-    bool destroyRequested = false;
-    bool initialized = false;
+    bool m_DestroyRequested = false;
+    bool m_Initialized = false;
 } g_AppState;
 
 namespace App
@@ -46,6 +50,16 @@ namespace App
     {
         return g_HasFocus;
     }
+
+    bool IsResumed()
+    {
+        return g_IsResumed;
+    }
+
+    bool SurfaceReady()
+    {
+        return g_SurfaceReady;
+    }
 }
 
 namespace AppBackend
@@ -57,11 +71,6 @@ namespace AppBackend
             callbackPair.second(callbackPair.first, x, y);
             //callback(1, 1.0f, 1.0f);
         });
-    }
-
-    void SetHasFocus(bool hasFocus = true)
-    {
-        g_HasFocus = hasFocus;
     }
 
     void SetInitialized(bool initialized = true)
@@ -142,7 +151,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_example_micha_vulkansink_VulkanActivi
 extern "C" JNIEXPORT void JNICALL Java_com_example_micha_vulkansink_VulkanActivity_nativeOnResume(JNIEnv* jenv, jobject obj)
 {
     LOGI("nativeOnResume");
-    AppBackend::SetHasFocus();
+    g_IsResumed = true;
     if (App::GetAppState()->initialized)
     {
         PostFrameCallback();
@@ -153,37 +162,29 @@ extern "C" JNIEXPORT void JNICALL Java_com_example_micha_vulkansink_VulkanActivi
 extern "C" JNIEXPORT void JNICALL Java_com_example_micha_vulkansink_VulkanActivity_nativeOnPause(JNIEnv* jenv, jobject obj)
 {
     LOGI("nativeOnPause");
-    AppBackend::SetHasFocus(false);
+    g_IsResumed = false;
     return;
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_example_micha_vulkansink_VulkanActivity_nativeOnStop(JNIEnv* jenv, jobject obj)
 {
     LOGI("nativeOnStop");
-    AppBackend::SetHasFocus(false);
     return;
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_example_micha_vulkansink_VulkanActivity_nativeOnRestart(JNIEnv* jenv, jobject obj)
 {
     LOGI("nativeOnRestart");
-    AppBackend::SetHasFocus(true);
 }
 
 
 extern "C" JNIEXPORT void JNICALL Java_com_example_micha_vulkansink_VulkanActivity_nativeOnDestroy(JNIEnv* jenv, jobject obj)
 {
     LOGI("nativeOnDestroy");
-    App::GetAppState()->destroyRequested = true;
 }
 
+/*
 
-
-extern "C" JNIEXPORT void JNICALL Java_com_example_micha_vulkansink_VulkanActivity_nativeSetSurface(JNIEnv* jenv, jobject obj, jobject surface)
-{
-    if (surface != 0)
-    {
-        ANativeWindow* window = ANativeWindow_fromSurface(jenv, surface);
         LOGI("Got window %p", window);
         if (App::GetAppState()->initialized)
         {
@@ -194,14 +195,27 @@ extern "C" JNIEXPORT void JNICALL Java_com_example_micha_vulkansink_VulkanActivi
             AppBackend::SetHasFocus();
             PostFrameCallback();
         }
+
+ -----
+
+         LOGI("Releasing window");
+        Vulkan::ReleaseSurface();
+
+ */
+
+
+extern "C" JNIEXPORT void JNICALL Java_com_example_micha_vulkansink_VulkanActivity_nativeSetSurface(JNIEnv* jenv, jobject obj, jobject surface)
+{
+    if (surface != 0)
+    {
+        g_Window = ANativeWindow_fromSurface(jenv, surface);
+        g_SurfaceReady = true;
     }
     else
     {
-        LOGI("Releasing window");
-        Vulkan::ReleaseSurface();
+        g_Window = nullptr;
+        g_SurfaceReady = false;
     }
-
-    return;
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_example_micha_vulkansink_VulkanActivity_nativeOnInput(JNIEnv* jenv, jobject obj, jint action, jfloat x, jfloat y)
@@ -214,4 +228,12 @@ extern "C" JNIEXPORT void JNICALL Java_com_example_micha_vulkansink_VulkanActivi
 extern "C" JNIEXPORT void JNICALL Java_com_example_micha_vulkansink_VulkanActivity_nativeOnConfigurationChanged(JNIEnv* jenv)
 {
     LOGI("Configuration Changed");
+}
+
+
+extern "C" JNIEXPORT void JNICALL Java_com_example_micha_vulkansink_VulkanActivity_nativeOnWindowsFocusChanged(JNIEnv* jenv, jobject obj, jboolean hasFocus)
+{
+    LOGI("WindowsFocus Changed");
+
+    g_HasFocus = hasFocus;
 }
