@@ -1,0 +1,33 @@
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral()
+        maven { url 'https://maven.google.com' }
+        google()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.0.1'
+    }
+}
+
+allprojects {
+    ext {
+        AndroidCompileSdkVersion = 26
+        AndroidBuildToolsVersion = "26.0.2"
+        AndroidMinSdkVersion = 24
+        AndroidTargetSdkVersion = 26
+        AndroidVersionCode = 1
+        AndroidVersionName = "0.1"
+        GoogleServicesVersion = "11.8.0"
+    }
+    repositories {
+        jcenter()
+        mavenCentral()
+        maven { url 'https://maven.google.com' }
+        google()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
